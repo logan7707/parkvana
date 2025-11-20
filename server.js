@@ -154,7 +154,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 // ==================== PARKING SPOTS ROUTES ====================
 
-// Search parking spots
+// Search parking spots (WITHOUT PostGIS)
 app.get('/api/spots/search', async (req, res) => {
   const { latitude, longitude, radius = 5000 } = req.query;
 
@@ -163,7 +163,10 @@ app.get('/api/spots/search', async (req, res) => {
   }
 
   try {
-    // Using PostGIS to find spots within radius (in meters)
+    // Using distance calculation (Haversine formula)
+    // radius is in meters, converting to degrees (roughly)
+    const radiusInDegrees = radius / 111000; // 1 degree ≈ 111km
+
     const result = await pool.query(
       `SELECT 
         ps.id,
@@ -172,21 +175,26 @@ app.get('/api/spots/search', async (req, res) => {
         ps.address,
         ps.hourly_rate,
         ps.available,
-        ST_X(ps.location::geometry) as longitude,
-        ST_Y(ps.location::geometry) as latitude,
+        ps.longitude,
+        ps.latitude,
         u.first_name as owner_first_name,
-        u.last_name as owner_last_name
+        u.last_name as owner_last_name,
+        (
+          6371000 * acos(
+            cos(radians($1)) * cos(radians(ps.latitude)) * 
+            cos(radians(ps.longitude) - radians($2)) + 
+            sin(radians($1)) * sin(radians(ps.latitude))
+          )
+        ) as distance_meters
        FROM parking_spaces ps
        JOIN users u ON ps.owner_id = u.id
        WHERE ps.available = true
-       AND ST_DWithin(
-         ps.location::geography,
-         ST_MakePoint($1, $2)::geography,
-         $3
-       )
-       ORDER BY ST_Distance(ps.location::geography, ST_MakePoint($1, $2)::geography)
+       AND ps.latitude BETWEEN $1 - $3 AND $1 + $3
+       AND ps.longitude BETWEEN $2 - $3 AND $2 + $3
+       HAVING distance_meters <= $4
+       ORDER BY distance_meters
        LIMIT 50`,
-      [longitude, latitude, radius]
+      [latitude, longitude, radiusInDegrees, radius]
     );
 
     res.json({
@@ -207,8 +215,8 @@ app.get('/api/spots/:id', async (req, res) => {
     const result = await pool.query(
       `SELECT 
         ps.*,
-        ST_X(ps.location::geometry) as longitude,
-        ST_Y(ps.location::geometry) as latitude,
+        ps.longitude,
+        ps.latitude,
         u.first_name as owner_first_name,
         u.last_name as owner_last_name,
         u.email as owner_email
@@ -229,7 +237,7 @@ app.get('/api/spots/:id', async (req, res) => {
   }
 });
 
-// Create new parking space
+// Create new parking space (WITHOUT PostGIS)
 app.post('/api/spots', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
 
@@ -267,10 +275,10 @@ app.post('/api/spots', async (req, res) => {
     // Insert parking space
     const result = await pool.query(
       `INSERT INTO parking_spaces 
-       (owner_id, title, description, address, city, state, zip_code, hourly_rate, space_type, location, available) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ST_SetSRID(ST_MakePoint($10, $11), 4326), true)
+       (owner_id, title, description, address, city, state, zip_code, hourly_rate, space_type, latitude, longitude, available) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true)
        RETURNING id, title, address, hourly_rate`,
-      [decoded.userId, title, description, address, city, state, zip_code, hourly_rate, space_type, longitude, latitude]
+      [decoded.userId, title, description, address, city, state, zip_code, hourly_rate, space_type, latitude, longitude]
     );
 
     console.log('Parking space created:', result.rows[0].id);
@@ -388,8 +396,8 @@ app.get('/api/bookings', async (req, res) => {
         b.*,
         ps.title as parking_title,
         ps.address as parking_address,
-        ST_X(ps.location::geometry) as longitude,
-        ST_Y(ps.location::geometry) as latitude
+        ps.longitude,
+        ps.latitude
        FROM bookings b
        JOIN parking_spaces ps ON b.space_id = ps.id
        WHERE b.renter_id = $1
