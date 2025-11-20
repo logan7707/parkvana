@@ -1,24 +1,11 @@
 # Dependencies
 node_modules/
-Mobile/node_modules/
 
 # Environment variables
 .env
 
 # Logs
 *.log
-npm-debug.log*
 
 # OS
 .DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Build
-build/
-dist/
