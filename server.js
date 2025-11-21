@@ -154,7 +154,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 // ==================== PARKING SPOTS ROUTES ====================
 
-// Search parking spots (WITHOUT PostGIS)
+// Search parking spots (WITHOUT PostGIS - FIXED)
 app.get('/api/spots/search', async (req, res) => {
   const { latitude, longitude, radius = 5000 } = req.query;
 
@@ -163,37 +163,40 @@ app.get('/api/spots/search', async (req, res) => {
   }
 
   try {
-    // Using distance calculation (Haversine formula)
-    // radius is in meters, converting to degrees (roughly)
+    // Using distance calculation in a subquery
     const radiusInDegrees = radius / 111000; // 1 degree ≈ 111km
 
     const result = await pool.query(
-      `SELECT 
-        ps.id,
-        ps.title,
-        ps.description,
-        ps.address,
-        ps.hourly_rate,
-        ps.available,
-        ps.longitude,
-        ps.latitude,
-        u.first_name as owner_first_name,
-        u.last_name as owner_last_name,
-        (
-          6371000 * acos(
-            cos(radians($1)) * cos(radians(ps.latitude)) * 
-            cos(radians(ps.longitude) - radians($2)) + 
-            sin(radians($1)) * sin(radians(ps.latitude))
-          )
-        ) as distance_meters
-       FROM parking_spaces ps
-       JOIN users u ON ps.owner_id = u.id
-       WHERE ps.available = true
-       AND ps.latitude BETWEEN $1 - $3 AND $1 + $3
-       AND ps.longitude BETWEEN $2 - $3 AND $2 + $3
-       HAVING distance_meters <= $4
-       ORDER BY distance_meters
-       LIMIT 50`,
+      `SELECT * FROM (
+        SELECT 
+          ps.id,
+          ps.title,
+          ps.description,
+          ps.address,
+          ps.hourly_rate,
+          ps.available,
+          ps.longitude,
+          ps.latitude,
+          u.first_name as owner_first_name,
+          u.last_name as owner_last_name,
+          (
+            6371000 * acos(
+              LEAST(1.0, GREATEST(-1.0,
+                cos(radians($1)) * cos(radians(ps.latitude)) * 
+                cos(radians(ps.longitude) - radians($2)) + 
+                sin(radians($1)) * sin(radians(ps.latitude))
+              ))
+            )
+          ) as distance_meters
+        FROM parking_spaces ps
+        JOIN users u ON ps.owner_id = u.id
+        WHERE ps.available = true
+        AND ps.latitude BETWEEN $1 - $3 AND $1 + $3
+        AND ps.longitude BETWEEN $2 - $3 AND $2 + $3
+      ) AS nearby_spots
+      WHERE distance_meters <= $4
+      ORDER BY distance_meters
+      LIMIT 50`,
       [latitude, longitude, radiusInDegrees, radius]
     );
 
