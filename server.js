@@ -11,6 +11,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoints for Railway
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Parkvana API is running' });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
 // PostgreSQL connection
 const pool = new Pool({
   user: process.env.DB_USER,
