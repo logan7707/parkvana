@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parkvana - Find & Rent Parking Instantly</title>
-    <meta name="description" content="Find affordable parking spots near you or earn money by renting out your unused parking space. Join Parkvana today!">
+    <title>Parkvana - Find Parking & Support Veterans</title>
+    <meta name="description" content="Find affordable parking or earn money renting your space. Every booking feeds a veteran. Join Parkvana today!">
     
     <style>
         * {
@@ -21,7 +21,7 @@
 
         /* Header */
         header {
-            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            background: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
             color: white;
             padding: 1rem 0;
             position: fixed;
@@ -59,7 +59,7 @@
 
         .cta-button {
             background: white;
-            color: #007AFF;
+            color: #0ba360;
             padding: 10px 25px;
             border-radius: 25px;
             font-weight: 600;
@@ -67,7 +67,7 @@
 
         /* Hero Section */
         .hero {
-            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            background: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
             color: white;
             padding: 140px 20px 80px;
             text-align: center;
@@ -81,8 +81,18 @@
 
         .hero .subtitle {
             font-size: 24px;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             opacity: 0.95;
+        }
+
+        .hero .mission {
+            font-size: 20px;
+            margin-bottom: 40px;
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 30px;
+            display: inline-block;
+            font-weight: 600;
         }
 
         .hero-buttons {
@@ -109,13 +119,35 @@
 
         .btn-primary {
             background: white;
-            color: #007AFF;
+            color: #0ba360;
         }
 
         .btn-secondary {
             background: rgba(255,255,255,0.2);
             color: white;
             border: 2px solid white;
+        }
+
+        /* Veteran Mission Banner */
+        .veteran-banner {
+            background: linear-gradient(135deg, #e8f8f5 0%, #d4f1ea 100%);
+            padding: 40px 20px;
+            text-align: center;
+            border-left: 5px solid #0ba360;
+        }
+
+        .veteran-banner h2 {
+            font-size: 36px;
+            color: #0ba360;
+            margin-bottom: 15px;
+        }
+
+        .veteran-banner p {
+            font-size: 18px;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.8;
         }
 
         /* Features Section */
@@ -151,11 +183,12 @@
             border-radius: 15px;
             background: #f8f9fa;
             transition: transform 0.3s, box-shadow 0.3s;
+            border-top: 4px solid #0ba360;
         }
 
         .feature-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            box-shadow: 0 15px 35px rgba(11, 163, 96, 0.15);
         }
 
         .feature-icon {
@@ -166,7 +199,7 @@
         .feature-card h3 {
             font-size: 24px;
             margin-bottom: 15px;
-            color: #333;
+            color: #0ba360;
         }
 
         .feature-card p {
@@ -177,7 +210,7 @@
 
         /* How It Works */
         .how-it-works {
-            background: #007AFF;
+            background: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
             color: white;
             padding: 80px 20px;
         }
@@ -199,7 +232,7 @@
             width: 60px;
             height: 60px;
             background: white;
-            color: #007AFF;
+            color: #0ba360;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -232,7 +265,7 @@
         .stat-number {
             font-size: 48px;
             font-weight: bold;
-            color: #007AFF;
+            color: #0ba360;
             margin-bottom: 10px;
         }
 
@@ -243,7 +276,7 @@
 
         /* CTA Section */
         .cta-section {
-            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            background: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
             color: white;
             padding: 100px 20px;
             text-align: center;
@@ -281,7 +314,7 @@
 
         .email-signup button {
             padding: 15px 40px;
-            background: #333;
+            background: #1a1a1a;
             color: white;
             border: none;
             border-radius: 30px;
@@ -292,12 +325,17 @@
         }
 
         .email-signup button:hover {
-            background: #555;
+            background: #333;
+        }
+
+        .email-signup button:disabled {
+            background: #666;
+            cursor: not-allowed;
         }
 
         /* Footer */
         footer {
-            background: #333;
+            background: #1a1a1a;
             color: white;
             padding: 60px 20px 20px;
         }
@@ -314,6 +352,7 @@
         .footer-section h4 {
             font-size: 18px;
             margin-bottom: 20px;
+            color: #0ba360;
         }
 
         .footer-section ul {
@@ -331,14 +370,44 @@
         }
 
         .footer-section a:hover {
-            color: white;
+            color: #0ba360;
         }
 
         .footer-bottom {
             text-align: center;
             padding-top: 30px;
-            border-top: 1px solid #555;
+            border-top: 1px solid #333;
             color: #999;
+        }
+
+        /* Messages */
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .success-message {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .error-message {
+            background: #f44336;
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Mobile Responsive */
@@ -351,8 +420,16 @@
                 font-size: 18px;
             }
 
+            .hero .mission {
+                font-size: 16px;
+            }
+
             .section-title {
                 font-size: 32px;
+            }
+
+            .veteran-banner h2 {
+                font-size: 28px;
             }
 
             .nav-buttons {
@@ -367,16 +444,6 @@
             .email-signup button {
                 width: 100%;
             }
-        }
-
-        /* Success Message */
-        .success-message {
-            background: #4CAF50;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            display: none;
         }
     </style>
 </head>
@@ -395,12 +462,23 @@
 
     <!-- Hero Section -->
     <section class="hero">
-        <h1>Find & Rent Parking Instantly</h1>
+        <h1>Find Parking Anywhere, Anytime</h1>
         <p class="subtitle">The easiest way to find parking or earn money from your unused space</p>
+        <p class="mission">🇺🇸 Every booking feeds a veteran</p>
         <div class="hero-buttons">
             <a href="#cta" class="btn btn-primary">Download App</a>
-            <a href="#how-it-works" class="btn btn-secondary">Learn More</a>
+            <a href="#mission" class="btn btn-secondary">Our Mission</a>
         </div>
+    </section>
+
+    <!-- Veteran Mission Banner -->
+    <section id="mission" class="veteran-banner">
+        <h2>🇺🇸 Our Mission: Supporting Those Who Served</h2>
+        <p>
+            Every time you book parking through Parkvana, we donate $1 to support Austin veterans. 
+            We partner with local veteran organizations to help feed those who served our country. 
+            Park with purpose, and make a difference with every reservation.
+        </p>
     </section>
 
     <!-- Features Section -->
@@ -417,8 +495,8 @@
 
             <div class="feature-card">
                 <div class="feature-icon">💰</div>
-                <h3>Earn Extra Income</h3>
-                <p>Turn your unused driveway, garage, or parking spot into a steady income stream. List in minutes.</p>
+                <h3>Earn $50-200/Month</h3>
+                <p>Turn your unused driveway, garage, or parking spot into steady income. List in minutes, keep 85% of earnings.</p>
             </div>
 
             <div class="feature-card">
@@ -428,9 +506,9 @@
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon">🔒</div>
-                <h3>Safe & Secure</h3>
-                <p>All transactions are protected. Verified users, secure payments, and 24/7 customer support.</p>
+                <div class="feature-icon">🇺🇸</div>
+                <h3>Support Veterans</h3>
+                <p>Every booking helps feed a veteran in need. Park with purpose and make a difference.</p>
             </div>
 
             <div class="feature-card">
@@ -440,9 +518,9 @@
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon">📱</div>
-                <h3>Mobile First</h3>
-                <p>Beautiful, easy-to-use mobile app for iOS and Android. Manage everything from your phone.</p>
+                <div class="feature-icon">🔒</div>
+                <h3>Safe & Secure</h3>
+                <p>All transactions protected. Verified users, secure payments, and 24/7 customer support.</p>
             </div>
         </div>
     </section>
@@ -455,8 +533,8 @@
         <div class="steps-grid">
             <div class="step">
                 <div class="step-number">1</div>
-                <h3>Sign Up Free</h3>
-                <p>Create your account in seconds. No credit card required to start.</p>
+                <h3>Download App</h3>
+                <p>Get Parkvana free on iOS or Android. Sign up in seconds.</p>
             </div>
 
             <div class="step">
@@ -467,14 +545,14 @@
 
             <div class="step">
                 <div class="step-number">3</div>
-                <h3>Book Instantly</h3>
-                <p>Reserve parking with one tap. Get instant confirmation and directions.</p>
+                <h3>Book & Pay</h3>
+                <p>Reserve parking with one tap. Secure payment through the app.</p>
             </div>
 
             <div class="step">
                 <div class="step-number">4</div>
                 <h3>Park & Go</h3>
-                <p>Drive to your spot, park, and go. It's that simple!</p>
+                <p>Get directions, park your car, and go. Help feed a veteran too!</p>
             </div>
         </div>
     </section>
@@ -484,20 +562,20 @@
         <h2 class="section-title">Parkvana by the Numbers</h2>
         <div class="stats-grid">
             <div class="stat">
-                <div class="stat-number">10K+</div>
-                <div class="stat-label">Parking Spots</div>
+                <div class="stat-number">1,247</div>
+                <div class="stat-label">Active Spots</div>
             </div>
             <div class="stat">
-                <div class="stat-number">50K+</div>
-                <div class="stat-label">Happy Users</div>
+                <div class="stat-number">$3,421</div>
+                <div class="stat-label">Fed to Veterans</div>
             </div>
             <div class="stat">
-                <div class="stat-number">$45</div>
+                <div class="stat-number">$150</div>
                 <div class="stat-label">Avg. Monthly Earnings</div>
             </div>
             <div class="stat">
-                <div class="stat-number">4.8★</div>
-                <div class="stat-label">App Store Rating</div>
+                <div class="stat-number">85%</div>
+                <div class="stat-label">You Keep</div>
             </div>
         </div>
     </section>
@@ -505,15 +583,19 @@
     <!-- CTA Section -->
     <section id="cta" class="cta-section">
         <h2>Ready to Get Started?</h2>
-        <p>Join thousands of people finding parking or earning extra income</p>
+        <p>Join Parkvana and start parking smarter or earning more</p>
         
-        <div class="email-signup">
+        <form class="email-signup" onsubmit="handleSignup(event)">
             <input type="email" id="emailInput" placeholder="Enter your email" required>
-            <button onclick="handleSignup()">Get Early Access</button>
+            <button type="submit" id="submitBtn">Join Waitlist</button>
+        </form>
+        
+        <div class="message success-message" id="successMessage">
+            ✅ Thanks! We'll notify you when the app launches in your area!
         </div>
         
-        <div class="success-message" id="successMessage">
-            ✅ Thanks! We'll notify you when the app launches!
+        <div class="message error-message" id="errorMessage">
+            ❌ Something went wrong. Please try again.
         </div>
     </section>
 
@@ -522,26 +604,25 @@
         <div class="footer-content">
             <div class="footer-section">
                 <h4>🅿️ Parkvana</h4>
-                <p>Making parking easy for everyone. Find parking instantly or earn money from your unused space.</p>
+                <p>Making parking easy for everyone while supporting our veterans. Every booking makes a difference.</p>
             </div>
 
             <div class="footer-section">
                 <h4>Product</h4>
                 <ul>
-                    <li><a href="#">Find Parking</a></li>
-                    <li><a href="#">List Your Space</a></li>
-                    <li><a href="#">Pricing</a></li>
-                    <li><a href="#">Mobile App</a></li>
+                    <li><a href="#features">Find Parking</a></li>
+                    <li><a href="#features">List Your Space</a></li>
+                    <li><a href="#how-it-works">How It Works</a></li>
+                    <li><a href="#cta">Download App</a></li>
                 </ul>
             </div>
 
             <div class="footer-section">
                 <h4>Company</h4>
                 <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Contact</a></li>
-                    <li><a href="#">Careers</a></li>
-                    <li><a href="#">Press</a></li>
+                    <li><a href="#mission">Our Mission</a></li>
+                    <li><a href="mailto:support@parkvana.com">Contact</a></li>
+                    <li><a href="#mission">Veteran Support</a></li>
                 </ul>
             </div>
 
@@ -557,21 +638,48 @@
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2025 Parkvana. All rights reserved.</p>
+            <p>&copy; 2025 Parkvana. All rights reserved. 🇺🇸 Every booking feeds a veteran.</p>
         </div>
     </footer>
 
     <script>
-        function handleSignup() {
+        async function handleSignup(event) {
+            event.preventDefault();
+            
             const email = document.getElementById('emailInput').value;
-            if (email && email.includes('@')) {
-                document.getElementById('successMessage').style.display = 'block';
-                document.getElementById('emailInput').value = '';
+            const submitBtn = document.getElementById('submitBtn');
+            const successMsg = document.getElementById('successMessage');
+            const errorMsg = document.getElementById('errorMessage');
+            
+            // Hide previous messages
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+            
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Joining...';
+            
+            try {
+                const response = await fetch('/api/waitlist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
                 
-                // TODO: Send email to your backend/database
-                console.log('Email signup:', email);
-            } else {
-                alert('Please enter a valid email address');
+                if (response.ok) {
+                    successMsg.style.display = 'block';
+                    document.getElementById('emailInput').value = '';
+                } else {
+                    throw new Error('Failed to join waitlist');
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                errorMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Join Waitlist';
             }
         }
 

@@ -11,11 +11,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Health check endpoints for Railway
-app.get('/', (req, res) => {
-  res.json({ status: 'ok', message: 'Parkvana API is running' });
-});
+// Serve static files from public folder
+app.use(express.static('public'));
 
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
