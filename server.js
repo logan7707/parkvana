@@ -250,6 +250,7 @@ app.get('/api/spots/:id', async (req, res) => {
 });
 
 // Create new parking space (WITHOUT PostGIS)
+// NOTE: Listing fee ($10) not yet implemented - requires Stripe integration
 app.post('/api/spots', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
 
@@ -284,6 +285,9 @@ app.post('/api/spots', async (req, res) => {
 
     console.log('Creating parking space for user:', decoded.userId);
 
+    // TODO: Add $10 listing fee payment via Stripe before creating space
+    // For now, space is created without payment
+
     // Insert parking space
     const result = await pool.query(
       `INSERT INTO parking_spaces 
@@ -314,6 +318,7 @@ app.post('/api/spots', async (req, res) => {
 // ==================== BOOKINGS ROUTES ====================
 
 // Create booking
+// NOTE: Payment processing not yet implemented - requires Stripe integration
 app.post('/api/bookings', async (req, res) => {
   const { parking_space_id, start_time, end_time } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
@@ -363,6 +368,11 @@ app.post('/api/bookings', async (req, res) => {
       commission: commissionAmount,
       payout: ownerPayout
     });
+
+    // TODO: Charge driver via Stripe (totalPrice)
+    // TODO: Hold commission (commissionAmount)
+    // TODO: Schedule payout to owner (ownerPayout)
+    // For now, booking is created without payment
 
     // Create booking
     const result = await pool.query(
@@ -424,6 +434,54 @@ app.get('/api/bookings', async (req, res) => {
   } catch (error) {
     console.error('Error fetching bookings:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ==================== WAITLIST ROUTES ====================
+
+// Join waitlist
+app.post('/api/waitlist', async (req, res) => {
+  const { email } = req.body;
+  
+  // Validate email
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ error: 'Invalid email address' });
+  }
+  
+  try {
+    // Insert email into waitlist table
+    const result = await pool.query(
+      'INSERT INTO waitlist (email) VALUES ($1) ON CONFLICT (email) DO NOTHING RETURNING *',
+      [email.toLowerCase().trim()]
+    );
+    
+    if (result.rows.length > 0) {
+      console.log('New waitlist signup:', email);
+      res.status(201).json({ 
+        message: 'Successfully joined waitlist',
+        email: result.rows[0].email 
+      });
+    } else {
+      // Email already exists
+      res.status(200).json({ 
+        message: 'Already on waitlist',
+        email: email 
+      });
+    }
+  } catch (error) {
+    console.error('Waitlist signup error:', error);
+    res.status(500).json({ error: 'Could not join waitlist' });
+  }
+});
+
+// Get waitlist count (optional - for your own tracking)
+app.get('/api/waitlist/count', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*) FROM waitlist');
+    res.json({ count: parseInt(result.rows[0].count) });
+  } catch (error) {
+    console.error('Error getting waitlist count:', error);
+    res.status(500).json({ error: 'Could not get count' });
   }
 });
 

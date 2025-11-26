@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://192.168.1.249:3000/api';
+const API_BASE_URL = 'https://parkvana-production.up.railway.app/api';
 
 export const api = {
   register: async (userData) => {

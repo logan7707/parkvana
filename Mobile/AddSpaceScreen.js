@@ -39,7 +39,10 @@ export default function AddSpaceScreen({ navigation }) {
     try {
       // Get coordinates from address
       const fullAddress = `${address}, ${city}, ${state} ${zipCode}`;
+      console.log('Geocoding address:', fullAddress);
+      
       const geocoded = await Location.geocodeAsync(fullAddress);
+      console.log('Geocoded result:', geocoded);
       
       if (geocoded.length === 0) {
         Alert.alert('Error', 'Could not find location. Please check the address.');
@@ -48,6 +51,7 @@ export default function AddSpaceScreen({ navigation }) {
       }
 
       const { latitude, longitude } = geocoded[0];
+      console.log('Coordinates:', latitude, longitude);
 
       // Get token from AsyncStorage
       const token = await AsyncStorage.getItem('userToken');
@@ -61,7 +65,7 @@ export default function AddSpaceScreen({ navigation }) {
       console.log('Creating parking space with token:', token.substring(0, 20) + '...');
 
       // Create parking space via API
-      const response = await api.createParkingSpace(token, {
+      const spaceData = {
         title,
         description,
         address,
@@ -72,7 +76,11 @@ export default function AddSpaceScreen({ navigation }) {
         space_type: spaceType,
         latitude,
         longitude,
-      });
+      };
+      
+      console.log('Sending space data:', spaceData);
+      
+      const response = await api.createParkingSpace(token, spaceData);
 
       console.log('Space created successfully:', response);
 
@@ -239,7 +247,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 5,
-    color: '#007AFF',
+    color: '#0ba360',
   },
   subheader: {
     fontSize: 16,
@@ -282,22 +290,22 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: '#0ba360',
     marginRight: 10,
     marginBottom: 10,
   },
   spaceTypeButtonSelected: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0ba360',
   },
   spaceTypeText: {
-    color: '#007AFF',
+    color: '#0ba360',
     fontSize: 14,
   },
   spaceTypeTextSelected: {
     color: '#fff',
   },
   submitButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0ba360',
     padding: 18,
     borderRadius: 10,
     marginTop: 30,

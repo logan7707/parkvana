@@ -18,7 +18,7 @@ export default function App() {
         initialRouteName="Login"
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#007AFF',
+            backgroundColor: '#0ba360',
           },
           headerTintColor: '#fff',
           headerTitleStyle: {

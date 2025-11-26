@@ -7,12 +7,11 @@ export default function BookingModal({ visible, spot, onClose, onSuccess }) {
   const [selectedHours, setSelectedHours] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  const hourOptions = [1, 2, 3, 4, 5, 6, 8, 12, 24];
+  const hourOptions = [1, 2, 4, 8];
 
   const handleBook = async () => {
     setLoading(true);
     try {
-      // Get token
       const token = await AsyncStorage.getItem('userToken');
       
       if (!token) {
@@ -21,29 +20,18 @@ export default function BookingModal({ visible, spot, onClose, onSuccess }) {
         return;
       }
 
-      // Calculate start and end times
       const startTime = new Date();
       const endTime = new Date(startTime.getTime() + selectedHours * 60 * 60 * 1000);
 
-      console.log('Creating booking:', {
-        spot: spot.id,
-        hours: selectedHours,
-        start: startTime.toISOString(),
-        end: endTime.toISOString(),
-      });
-
-      // Create booking via API
       const response = await api.createBooking(token, {
         parking_space_id: spot.id,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
       });
 
-      console.log('Booking created:', response);
-
       Alert.alert(
-        'Booking Confirmed!',
-        `You've booked ${spot.title} for ${selectedHours} hour(s).\n\nTotal: $${(spot.hourly_rate * selectedHours).toFixed(2)}`,
+        'Booking Confirmed! 🎉',
+        `You've booked ${spot.title} for ${selectedHours} hour(s).\n\nTotal: $${(spot.hourly_rate * selectedHours).toFixed(2)}\n\n🇺🇸 Thanks! Your booking just helped feed a veteran.`,
         [
           {
             text: 'OK',
@@ -76,22 +64,25 @@ export default function BookingModal({ visible, spot, onClose, onSuccess }) {
     >
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
+          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Book Parking</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Text style={styles.closeButton}>✕</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.spotInfo}>
+          {/* Spot Info Card */}
+          <View style={styles.spotInfoCard}>
             <Text style={styles.spotTitle}>{spot.title}</Text>
             <Text style={styles.spotAddress}>{spot.address}</Text>
             <Text style={styles.spotRate}>${spot.hourly_rate}/hour</Text>
           </View>
 
+          {/* Duration Selector */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>How long do you need parking?</Text>
-            <View style={styles.hoursContainer}>
+            <Text style={styles.sectionTitle}>How long?</Text>
+            <View style={styles.hoursGrid}>
               {hourOptions.map((hours) => (
                 <TouchableOpacity
                   key={hours}
@@ -101,6 +92,7 @@ export default function BookingModal({ visible, spot, onClose, onSuccess }) {
                   ]}
                   onPress={() => setSelectedHours(hours)}
                   disabled={loading}
+                  activeOpacity={0.8}
                 >
                   <Text
                     style={[
@@ -115,7 +107,8 @@ export default function BookingModal({ visible, spot, onClose, onSuccess }) {
             </View>
           </View>
 
-          <View style={styles.summary}>
+          {/* Price Summary */}
+          <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Duration:</Text>
               <Text style={styles.summaryValue}>{selectedHours} hour(s)</Text>
@@ -124,16 +117,25 @@ export default function BookingModal({ visible, spot, onClose, onSuccess }) {
               <Text style={styles.summaryLabel}>Rate:</Text>
               <Text style={styles.summaryValue}>${spot.hourly_rate}/hr</Text>
             </View>
-            <View style={[styles.summaryRow, styles.totalRow]}>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryRow}>
               <Text style={styles.totalLabel}>Total:</Text>
               <Text style={styles.totalValue}>${totalCost}</Text>
             </View>
           </View>
 
+          {/* Veteran Mission */}
+          <View style={styles.missionCard}>
+            <Text style={styles.missionEmoji}>🇺🇸</Text>
+            <Text style={styles.missionText}>Every booking feeds a veteran</Text>
+          </View>
+
+          {/* Book Button */}
           <TouchableOpacity
             style={[styles.bookButton, loading && styles.bookButtonDisabled]}
             onPress={handleBook}
             disabled={loading}
+            activeOpacity={0.8}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -155,10 +157,11 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 30,
+    paddingBottom: 40,
+    maxHeight: '85%',
   },
   header: {
     flexDirection: 'row',
@@ -168,79 +171,79 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
+    color: '#1a1a1a',
   },
   closeButton: {
     fontSize: 28,
     color: '#999',
+    fontWeight: '300',
   },
-  spotInfo: {
-    backgroundColor: '#f8f9fa',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
+  spotInfoCard: {
+    backgroundColor: '#e8f8f5',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 25,
+    borderWidth: 2,
+    borderColor: '#3cba92',
   },
   spotTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#333',
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 8,
   },
   spotAddress: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 5,
+    marginBottom: 8,
   },
   spotRate: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#007AFF',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0ba360',
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 25,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 15,
-    color: '#333',
+    color: '#1a1a1a',
+    marginBottom: 12,
   },
-  hoursContainer: {
+  hoursGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 10,
   },
   hourButton: {
-    paddingHorizontal: 20,
+    flex: 1,
     paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#007AFF',
-    minWidth: 70,
+    borderRadius: 12,
+    backgroundColor: '#f5f5f5',
     alignItems: 'center',
   },
   hourButtonSelected: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0ba360',
   },
   hourButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#007AFF',
+    color: '#666',
   },
   hourButtonTextSelected: {
     color: '#fff',
   },
-  summary: {
+  summaryCard: {
     backgroundColor: '#f8f9fa',
-    padding: 15,
-    borderRadius: 10,
+    borderRadius: 15,
+    padding: 20,
     marginBottom: 20,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   summaryLabel: {
     fontSize: 16,
@@ -249,30 +252,53 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#1a1a1a',
   },
-  totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    paddingTop: 10,
-    marginTop: 5,
-    marginBottom: 0,
+  summaryDivider: {
+    height: 2,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 12,
   },
   totalLabel: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
+    color: '#1a1a1a',
   },
   totalValue: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#007AFF',
+    fontWeight: '700',
+    color: '#0ba360',
+  },
+  missionCard: {
+    backgroundColor: '#e8f8f5',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#0ba360',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  missionEmoji: {
+    fontSize: 20,
+  },
+  missionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0ba360',
+    flex: 1,
   },
   bookButton: {
-    backgroundColor: '#007AFF',
-    padding: 18,
-    borderRadius: 10,
+    backgroundColor: '#0ba360',
+    paddingVertical: 18,
+    borderRadius: 15,
     alignItems: 'center',
+    shadowColor: '#0ba360',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   bookButtonDisabled: {
     opacity: 0.6,
@@ -280,6 +306,6 @@ const styles = StyleSheet.create({
   bookButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
 });
