@@ -160,6 +160,118 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Update profile endpoint (NEW)
+app.patch('/api/auth/update-profile', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_this_in_production'
+    );
+
+    const { first_name, last_name } = req.body;
+
+    if (!first_name || !last_name) {
+      return res.status(400).json({ error: 'First name and last name are required' });
+    }
+
+    const result = await pool.query(
+      `UPDATE users 
+       SET first_name = $1, last_name = $2, updated_at = NOW()
+       WHERE id = $3
+       RETURNING id, first_name, last_name, email, user_type`,
+      [first_name, last_name, decoded.userId]
+    );
+
+    console.log('Profile updated for user:', decoded.userId);
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Change password endpoint (NEW)
+app.post('/api/auth/change-password', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_this_in_production'
+    );
+
+    const { current_password, new_password } = req.body;
+
+    if (!current_password || !new_password) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+
+    if (new_password.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    // Get current user
+    const userResult = await pool.query(
+      'SELECT * FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Verify current password
+    const validPassword = await bcrypt.compare(current_password, user.password_hash);
+
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(new_password, saltRounds);
+
+    // Update password
+    await pool.query(
+      'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+      [hashedPassword, decoded.userId]
+    );
+
+    console.log('Password changed for user:', decoded.userId);
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ==================== PARKING SPOTS ROUTES ====================
 
 // Search parking spots (WITHOUT PostGIS - FIXED)
@@ -244,6 +356,116 @@ app.get('/api/spots/:id', async (req, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error fetching spot:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get user's listed spaces (NEW)
+app.get('/api/spots/my-spaces', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_this_in_production'
+    );
+
+    const result = await pool.query(
+      `SELECT 
+        id,
+        title,
+        description,
+        address,
+        city,
+        state,
+        zip_code,
+        hourly_rate,
+        space_type,
+        available,
+        latitude,
+        longitude,
+        created_at
+       FROM parking_spaces
+       WHERE owner_id = $1
+       ORDER BY created_at DESC`,
+      [decoded.userId]
+    );
+
+    res.json({
+      count: result.rows.length,
+      spaces: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching user spaces:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Toggle space availability (NEW)
+app.patch('/api/spots/:id/toggle', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const { id } = req.params;
+  const { available } = req.body;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  if (typeof available !== 'boolean') {
+    return res.status(400).json({ error: 'Available must be true or false' });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_this_in_production'
+    );
+
+    // Verify ownership
+    const ownerCheck = await pool.query(
+      'SELECT owner_id FROM parking_spaces WHERE id = $1',
+      [id]
+    );
+
+    if (ownerCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Parking space not found' });
+    }
+
+    if (ownerCheck.rows[0].owner_id !== decoded.userId) {
+      return res.status(403).json({ error: 'Not authorized to modify this space' });
+    }
+
+    // Update availability
+    const result = await pool.query(
+      `UPDATE parking_spaces 
+       SET available = $1, updated_at = NOW()
+       WHERE id = $2
+       RETURNING id, title, available`,
+      [available, id]
+    );
+
+    console.log(`Space ${id} availability changed to ${available}`);
+
+    res.json({
+      message: 'Space availability updated',
+      space: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error toggling space availability:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
     res.status(500).json({ error: 'Internal server error' });
   }
 });
