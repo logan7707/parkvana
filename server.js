@@ -160,7 +160,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Update profile endpoint (NEW)
+// Update profile endpoint
 app.patch('/api/auth/update-profile', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
 
@@ -205,7 +205,7 @@ app.patch('/api/auth/update-profile', async (req, res) => {
   }
 });
 
-// Change password endpoint (NEW)
+// Change password endpoint
 app.post('/api/auth/change-password', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
 
@@ -263,6 +263,68 @@ app.post('/api/auth/change-password', async (req, res) => {
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
     console.error('Error changing password:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete account endpoint (NEW)
+app.delete('/api/auth/delete-account', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_this_in_production'
+    );
+
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ error: 'Password required to delete account' });
+    }
+
+    // Get user and verify password
+    const userResult = await pool.query(
+      'SELECT * FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Verify password
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Incorrect password' });
+    }
+
+    // Delete user's bookings first (foreign key constraint)
+    await pool.query('DELETE FROM bookings WHERE renter_id = $1', [decoded.userId]);
+
+    // Delete user's parking spaces
+    await pool.query('DELETE FROM parking_spaces WHERE owner_id = $1', [decoded.userId]);
+
+    // Finally delete user account
+    await pool.query('DELETE FROM users WHERE id = $1', [decoded.userId]);
+
+    console.log('Account deleted for user:', decoded.userId);
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting account:', error);
     
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ error: 'Invalid token' });
@@ -360,7 +422,7 @@ app.get('/api/spots/:id', async (req, res) => {
   }
 });
 
-// Get user's listed spaces (NEW)
+// Get user's listed spaces
 app.get('/api/spots/my-spaces', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
 
@@ -410,7 +472,7 @@ app.get('/api/spots/my-spaces', async (req, res) => {
   }
 });
 
-// Toggle space availability (NEW)
+// Toggle space availability
 app.patch('/api/spots/:id/toggle', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   const { id } = req.params;
