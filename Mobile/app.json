@@ -5,25 +5,72 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "parkvana",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1E3A8A"
+      "backgroundColor": "#0ba360"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "bundleIdentifier": "com.parkvana.app"
+      "bundleIdentifier": "com.parkvana.app",
+      "buildNumber": "9",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Parkvana needs your location to show nearby parking spots and help you navigate to your reservation.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Parkvana needs your location to show nearby parking spots and help you navigate to your reservation.",
+        "NSCameraUsageDescription": "Parkvana needs camera access to let you take photos of your parking space.",
+        "NSPhotoLibraryUsageDescription": "Parkvana needs photo library access to let you upload photos of your parking space.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyBQ8lwaT-Q5Mbt119zKLJO4fF1XKBuR26w"
+      }
     },
     "android": {
       "package": "com.parkvana.app",
+      "versionCode": 1,
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
-      ]
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0ba360"
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBQ8lwaT-Q5Mbt119zKLJO4fF1XKBuR26w"
+        }
+      }
     },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Parkvana to use your location to find nearby parking spots."
+        }
+      ],
+      "expo-font"
+    ],
     "extra": {
       "eas": {
         "projectId": "569d60a0-6fd1-4d00-a262-a3f01818c21c"
       }
-    }
+    },
+    "description": "Find affordable parking or earn money from your unused parking space. Every booking helps feed a veteran.",
+    "primaryColor": "#0ba360"
   }
 }

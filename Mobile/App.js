@@ -8,6 +8,9 @@ import SearchScreen from './SearchScreen';
 import AddSpaceScreen from './AddSpaceScreen';
 import BookingsScreen from './BookingsScreen';
 import ProfileScreen from './ProfileScreen';
+import MyListedSpacesScreen from './MyListedSpacesScreen';
+import EditProfileScreen from './EditProfileScreen';
+import HelpSupportScreen from './HelpSupportScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -60,6 +63,21 @@ export default function App() {
           name="Profile" 
           component={ProfileScreen}
           options={{ title: 'Profile' }}
+        />
+        <Stack.Screen 
+          name="MyListedSpaces" 
+          component={MyListedSpacesScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="EditProfile" 
+          component={EditProfileScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="HelpSupport" 
+          component={HelpSupportScreen}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -15,7 +15,11 @@ export default function BookingsScreen() {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('userToken');
-      const bookingsData = await api.getBookings(token);
+      const response = await api.getBookings(token);
+      
+      // Handle both response.bookings array or direct array
+      const bookingsData = response.bookings || response || [];
+      console.log('Loaded bookings:', bookingsData);
       setBookings(bookingsData);
     } catch (error) {
       console.error('Error loading bookings:', error);
@@ -38,6 +42,7 @@ export default function BookingsScreen() {
   const getStatusColor = (status) => {
     switch (status) {
       case 'confirmed':
+      case 'pending':
         return '#0ba360';
       case 'completed':
         return '#666';
@@ -62,9 +67,9 @@ export default function BookingsScreen() {
           <Text style={styles.bookingIconEmoji}>🅿️</Text>
         </View>
         <View style={styles.bookingInfo}>
-          <Text style={styles.bookingTitle}>{item.parking_space?.title || 'Parking Spot'}</Text>
+          <Text style={styles.bookingTitle}>{item.parking_title || 'Parking Spot'}</Text>
           <Text style={styles.bookingAddress} numberOfLines={1}>
-            {item.parking_space?.address || 'Address unavailable'}
+            {item.parking_address || 'Address unavailable'}
           </Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
@@ -77,15 +82,15 @@ export default function BookingsScreen() {
       <View style={styles.bookingDetails}>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>📅 Start:</Text>
-          <Text style={styles.detailValue}>{formatDate(item.start_time)}</Text>
+          <Text style={styles.detailValue}>{formatDate(item.start_datetime)}</Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>🕐 End:</Text>
-          <Text style={styles.detailValue}>{formatDate(item.end_time)}</Text>
+          <Text style={styles.detailValue}>{formatDate(item.end_datetime)}</Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>💵 Total:</Text>
-          <Text style={styles.priceValue}>${item.total_price}</Text>
+          <Text style={styles.priceValue}>${parseFloat(item.total_price).toFixed(2)}</Text>
         </View>
       </View>
 
@@ -225,7 +230,7 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
     marginBottom: 4,
   },
-  bookingAddress: {
+bookingAddress: {
     fontSize: 14,
     color: '#666',
   },
