@@ -416,13 +416,15 @@ app.get('/api/spots/search', async (req, res) => {
 
     const result = await pool.query(`
       SELECT ps.*, u.first_name, u.last_name,
-        (6371 * acos(cos(radians($1)) * cos(radians(latitude)) * 
-        cos(radians(longitude) - radians($2)) + sin(radians($1)) * 
-        sin(radians(latitude)))) AS distance
+        (6371 * acos(cos(radians($1)) * cos(radians(ps.latitude)) * 
+        cos(radians(ps.longitude) - radians($2)) + sin(radians($1)) * 
+        sin(radians(ps.latitude)))) AS distance
       FROM parking_spaces ps
       JOIN users u ON ps.owner_id = u.id
       WHERE ps.available = true
-      HAVING distance < $3
+      AND (6371 * acos(cos(radians($1)) * cos(radians(ps.latitude)) * 
+        cos(radians(ps.longitude) - radians($2)) + sin(radians($1)) * 
+        sin(radians(ps.latitude)))) < $3
       ORDER BY distance
     `, [latitude, longitude, radius]);
 
