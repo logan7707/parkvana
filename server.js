@@ -421,7 +421,7 @@ app.get('/api/spots/search', async (req, res) => {
         sin(radians(latitude)))) AS distance
       FROM parking_spaces ps
       JOIN users u ON ps.owner_id = u.id
-      WHERE ps.is_available = true
+      WHERE ps.available = true
       HAVING distance < $3
       ORDER BY distance
     `, [latitude, longitude, radius]);

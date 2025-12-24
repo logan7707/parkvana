@@ -2,7 +2,7 @@
   "expo": {
     "name": "Parkvana",
     "slug": "Mobile",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -17,7 +17,7 @@
     ],
     "ios": {
       "bundleIdentifier": "com.parkvana.app",
-      "buildNumber": "9",
+      "buildNumber": "11",
       "supportsTablet": false,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Parkvana needs your location to show nearby parking spots and help you navigate to your reservation.",
@@ -57,6 +57,12 @@
       "bundler": "metro"
     },
     "plugins": [
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.parkvana.app"
+        }
+      ],
       [
         "expo-location",
         {
