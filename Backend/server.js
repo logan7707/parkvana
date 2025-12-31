@@ -142,9 +142,6 @@ app.post('/api/spots', async (req, res) => {
       latitude,
       longitude,
       hourly_rate,
-      daily_rate,
-      weekly_rate,
-      monthly_rate,
       space_type,
       description,
       features
@@ -176,13 +173,11 @@ app.post('/api/spots', async (req, res) => {
     const result = await pool.query(
       `INSERT INTO parking_spaces 
        (owner_id, title, address, city, state, zip_code, latitude, longitude, 
-        hourly_rate, daily_rate, weekly_rate, monthly_rate, space_type, 
-        description, features, available)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, true)
+        hourly_rate, space_type, description, features, available)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
        RETURNING *`,
       [decoded.userId, title, address, city, state, zip_code, latitude, longitude, 
-       hourly_rate, daily_rate, weekly_rate, monthly_rate, space_type, 
-       description, features]
+       hourly_rate, space_type, description, features]
     );
     
     res.json(result.rows[0]);
