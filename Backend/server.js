@@ -242,7 +242,7 @@ app.put('/api/spots/:id', async (req, res) => {
            updated_at = NOW()
        WHERE id = $7
        RETURNING *`,
-      [title, address, hourly_rate, space_type, description, features, id]
+      [title, address, hourly_rate, space_type, description, features || null, id]
     );
     
     res.json(result.rows[0]);

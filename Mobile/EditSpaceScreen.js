@@ -70,7 +70,7 @@ export default function EditSpaceScreen({ route, navigation }) {
             hourly_rate: parseFloat(formData.hourly_rate),
             space_type: formData.space_type,
             description: formData.description.trim(),
-            features: formData.features.trim(),
+            features: formData.features.trim() || null,
           }),
         }
       );
