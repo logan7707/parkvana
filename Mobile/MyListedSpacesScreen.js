@@ -99,7 +99,7 @@ export default function MyListedSpacesScreen({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.actionButton, styles.editButton]}
-          onPress={() => Alert.alert('Coming Soon', 'Edit functionality will be available soon')}
+          onPress={() => navigation.navigate('EditSpace', { space: item })}
         >
           <Text style={styles.editButtonText}>✏️ Edit</Text>
         </TouchableOpacity>

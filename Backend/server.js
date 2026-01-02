@@ -205,6 +205,53 @@ app.get('/api/spots/my-spaces', async (req, res) => {
   }
 });
 
+// Update parking spot
+app.put('/api/spots/:id', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { id } = req.params;
+    
+    const {
+      title,
+      address,
+      hourly_rate,
+      space_type,
+      description,
+      features
+    } = req.body;
+    
+    // Verify ownership
+    const ownerCheck = await pool.query(
+      'SELECT owner_id FROM parking_spaces WHERE id = $1',
+      [id]
+    );
+    
+    if (ownerCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Space not found' });
+    }
+    
+    if (ownerCheck.rows[0].owner_id !== decoded.userId) {
+      return res.status(403).json({ error: 'Not authorized to edit this space' });
+    }
+    
+    const result = await pool.query(
+      `UPDATE parking_spaces 
+       SET title = $1, address = $2, hourly_rate = $3, 
+           space_type = $4, description = $5, features = $6,
+           updated_at = NOW()
+       WHERE id = $7
+       RETURNING *`,
+      [title, address, hourly_rate, space_type, description, features, id]
+    );
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Update spot error:', error);
+    res.status(500).json({ error: 'Failed to update parking space' });
+  }
+});
+
 // ============================================
 // STRIPE PAYMENT ROUTES
 // ============================================

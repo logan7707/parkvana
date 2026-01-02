@@ -11,10 +11,11 @@ import BookingsScreen from './BookingsScreen';
 import ProfileScreen from './ProfileScreen';
 import MyListedSpacesScreen from './MyListedSpacesScreen';
 import EditProfileScreen from './EditProfileScreen';
+import EditSpaceScreen from './EditSpaceScreen';
 import HelpSupportScreen from './HelpSupportScreen';
 import PaymentScreen from './Screens/PaymentScreen';
 
-const Stack = createNativeStackNavigator();eas submit --platform ios
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   const [stripeKey, setStripeKey] = useState('');
@@ -101,6 +102,11 @@ export default function App() {
           <Stack.Screen 
             name="EditProfile" 
             component={EditProfileScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="EditSpace" 
+            component={EditSpaceScreen}
             options={{ headerShown: false }}
           />
           <Stack.Screen 

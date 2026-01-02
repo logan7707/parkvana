@@ -1,42 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Alert, ScrollView } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, Alert, TouchableOpacity, Text } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 import { api } from './api';
 import BookingModal from './BookingModal';
 
-export default function SearchScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [spots, setSpots] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedSpot, setSelectedSpot] = useState(null);
-  const [bookingModalVisible, setBookingModalVisible] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('All');
+export default function SearchScreen({ navigation }) {
   const [region, setRegion] = useState({
     latitude: 30.2672,
     longitude: -97.7431,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
-
-  const filters = ['All', 'Near Me', 'Under $10', 'Available Now'];
-
-  useFocusEffect(
-    React.useCallback(() => {
-      loadSpots();
-    }, [])
-  );
+  const [spots, setSpots] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedSpot, setSelectedSpot] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [mapRef, setMapRef] = useState(null);
 
   const loadSpots = async () => {
     try {
       setLoading(true);
-      const latitude = 30.2672; // Austin, TX
-      const longitude = -97.7431;
-      const response = await api.searchSpots(latitude, longitude, 10000);
-      
-      const spotsData = response.spots || response;
-      setSpots(Array.isArray(spotsData) ? spotsData : []);
+
+      const response = await api.searchSpots(
+        region.latitude,
+        region.longitude,
+        10000
+      );
+
+      setSpots(response.spots || []);
     } catch (error) {
       console.error('Error loading spots:', error);
       Alert.alert('Error', 'Could not load parking spots');
@@ -45,150 +39,113 @@ export default function SearchScreen() {
     }
   };
 
-  const handleSpotPress = (spot) => {
-    setSelectedSpot(spot);
-    setBookingModalVisible(true);
-  };
-
-  const handleMarkerPress = (spot) => {
-    // Center map on selected spot
-    if (spot.latitude && spot.longitude) {
-      setRegion({
-        latitude: spot.latitude,
-        longitude: spot.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-    }
-    setSelectedSpot(spot);
-    setBookingModalVisible(true);
-  };
-
-  const renderSpot = ({ item }) => (
-    <TouchableOpacity
-      style={styles.spotCard}
-      onPress={() => handleSpotPress(item)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.spotImage}>
-        <Text style={styles.spotImageEmoji}>🅿️</Text>
-      </View>
-      <View style={styles.spotInfo}>
-        <Text style={styles.spotTitle}>{item.title}</Text>
-        <Text style={styles.spotAddress} numberOfLines={1}>
-          {item.address}
-        </Text>
-        <View style={styles.spotMeta}>
-          <Text style={styles.spotDistance}>0.5mi away</Text>
-          <Text style={styles.spotDot}>•</Text>
-          <Text style={styles.spotAvailability}>Available now</Text>
-        </View>
-        <Text style={styles.spotPrice}>${item.hourly_rate}/hr</Text>
-      </View>
-    </TouchableOpacity>
+  useFocusEffect(
+    useCallback(() => {
+      loadSpots();
+    }, [])
   );
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0ba360" />
-      </View>
-    );
-  }
+  const handleMarkerPress = (spot) => {
+    setSelectedSpot(spot);
+    setModalVisible(true);
+  };
+
+  const handleLocateMe = async () => {
+    try {
+      setLoading(true);
+      
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Denied',
+          'Please enable location permissions in your settings to use this feature.'
+        );
+        setLoading(false);
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      const newRegion = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      };
+
+      setRegion(newRegion);
+
+      setTimeout(() => {
+        if (mapRef) {
+          mapRef.animateToRegion(newRegion, 1000);
+        }
+      }, 100);
+
+      const response = await api.searchSpots(
+        location.coords.latitude,
+        location.coords.longitude,
+        10000
+      );
+
+      setSpots(response.spots || []);
+      
+    } catch (error) {
+      console.error('Location error:', error);
+      Alert.alert('Error', 'Could not get your location. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {/* Map Area */}
-      <View style={styles.mapArea}>
-        <MapView
-          style={styles.map}
-          region={region}
-          onRegionChangeComplete={setRegion}
-          provider={PROVIDER_GOOGLE}
-        >
-          {spots.map((spot) => {
-            if (spot.latitude && spot.longitude) {
-              return (
-                <Marker
-                  key={spot.id}
-                  coordinate={{
-                    latitude: parseFloat(spot.latitude),
-                    longitude: parseFloat(spot.longitude),
-                  }}
-                  onPress={() => handleMarkerPress(spot)}
-                >
-                  <View style={styles.customMarker}>
-                    <Text style={styles.markerText}>🅿️</Text>
-                    <Text style={styles.markerPrice}>${spot.hourly_rate}/hr</Text>
-                  </View>
-                </Marker>
-              );
-            }
-            return null;
-          })}
-        </MapView>
+      <MapView
+        ref={(ref) => setMapRef(ref)}
+        provider={PROVIDER_GOOGLE}
+        style={styles.map}
+        initialRegion={region}
+        showsUserLocation={true}
+        showsMyLocationButton={false}
+      >
+        {spots.map((spot) => (
+          <Marker
+            key={spot.id}
+            coordinate={{
+              latitude: parseFloat(spot.latitude),
+              longitude: parseFloat(spot.longitude),
+            }}
+            onPress={() => handleMarkerPress(spot)}
+          >
+            <View style={styles.markerContainer}>
+              <Text style={styles.markerPrice}>${spot.hourly_rate}/hr</Text>
+            </View>
+          </Marker>
+        ))}
+      </MapView>
 
-        {/* Search Bar */}
-        <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search location..."
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
+      <TouchableOpacity
+        style={styles.locateMeButton}
+        onPress={handleLocateMe}
+        disabled={loading}
+      >
+        <Text style={styles.locateMeIcon}>📍</Text>
+        <Text style={styles.locateMeText}>Locate Me</Text>
+      </TouchableOpacity>
 
-        {/* Filter Chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filtersContainer}
-          contentContainerStyle={styles.filtersContent}
-        >
-          {filters.map((filter) => (
-            <TouchableOpacity
-              key={filter}
-              style={[
-                styles.filterChip,
-                activeFilter === filter && styles.filterChipActive,
-              ]}
-              onPress={() => setActiveFilter(filter)}
-              activeOpacity={0.8}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  activeFilter === filter && styles.filterTextActive,
-                ]}
-              >
-                {filter}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Results List */}
-      <View style={styles.resultsContainer}>
-        <Text style={styles.resultsTitle}>Nearby Parking ({spots.length})</Text>
-        <FlatList
-          data={spots}
-          renderItem={renderSpot}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
-
-      {/* Booking Modal */}
       <BookingModal
-        visible={bookingModalVisible}
+        visible={modalVisible}
         spot={selectedSpot}
-        onClose={() => setBookingModalVisible(false)}
+        navigation={navigation}
+        onClose={() => {
+          setModalVisible(false);
+          setSelectedSpot(null);
+        }}
         onSuccess={() => {
-          setBookingModalVisible(false);
+          setModalVisible(false);
+          setSelectedSpot(null);
           loadSpots();
         }}
       />
@@ -199,175 +156,50 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-  },
-  mapArea: {
-    height: '45%',
-    position: 'relative',
   },
   map: {
-    width: '100%',
-    height: '100%',
+    flex: 1,
   },
-  customMarker: {
+  markerContainer: {
     backgroundColor: '#0ba360',
     padding: 8,
-    borderRadius: 12,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  markerPrice: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  locateMeButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: '#0ba360',
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
   },
-  markerText: {
+  locateMeIcon: {
     fontSize: 20,
+    marginRight: 8,
   },
-  markerPrice: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  searchBar: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    right: 20,
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  searchIcon: {
-    fontSize: 20,
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
+  locateMeText: {
+    color: 'white',
     fontSize: 16,
-    color: '#333',
-  },
-  filtersContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-  },
-  filtersContent: {
-    gap: 10,
-    paddingRight: 20,
-  },
-  filterChip: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  filterChipActive: {
-    backgroundColor: '#0ba360',
-  },
-  filterText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-  },
-  filterTextActive: {
-    color: '#fff',
-  },
-  resultsContainer: {
-    flex: 1,
-    padding: 20,
-  },
-  resultsTitle: {
-    fontSize: 20,
     fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 15,
-  },
-  listContent: {
-    paddingBottom: 20,
-  },
-  spotCard: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 15,
-    marginBottom: 12,
-    flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  spotImage: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#0ba360',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 15,
-  },
-  spotImageEmoji: {
-    fontSize: 32,
-  },
-  spotInfo: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  spotTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 4,
-  },
-  spotAddress: {
-    fontSize: 13,
-    color: '#666',
-    marginBottom: 8,
-  },
-  spotMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  spotDistance: {
-    fontSize: 13,
-    color: '#666',
-  },
-  spotDot: {
-    fontSize: 13,
-    color: '#666',
-    marginHorizontal: 6,
-  },
-  spotAvailability: {
-    fontSize: 13,
-    color: '#0ba360',
-    fontWeight: '600',
-  },
-  spotPrice: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0ba360',
   },
 });
