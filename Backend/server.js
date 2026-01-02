@@ -370,6 +370,176 @@ app.post('/api/bookings/confirm', async (req, res) => {
 });
 
 // ============================================
+// PAYMENT METHODS ROUTES
+// ============================================
+
+// Get user's payment methods
+app.get('/api/payment-methods', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Get user's Stripe customer ID
+    const userResult = await pool.query(
+      'SELECT stripe_customer_id FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const stripeCustomerId = userResult.rows[0].stripe_customer_id;
+
+    if (!stripeCustomerId) {
+      return res.json({ paymentMethods: [] });
+    }
+
+    // Get payment methods from Stripe
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: stripeCustomerId,
+      type: 'card',
+    });
+
+    // Get default payment method
+    const customer = await stripe.customers.retrieve(stripeCustomerId);
+    const defaultPaymentMethodId = customer.invoice_settings?.default_payment_method;
+
+    // Format payment methods
+    const formattedMethods = paymentMethods.data.map(pm => ({
+      id: pm.id,
+      card: pm.card,
+      is_default: pm.id === defaultPaymentMethodId,
+    }));
+
+    res.json({ paymentMethods: formattedMethods });
+  } catch (error) {
+    console.error('Get payment methods error:', error);
+    res.status(500).json({ error: 'Failed to get payment methods' });
+  }
+});
+
+// Add payment method
+app.post('/api/payment-methods', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { payment_method_id } = req.body;
+
+    // Get or create Stripe customer
+    const userResult = await pool.query(
+      'SELECT stripe_customer_id, email FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let stripeCustomerId = userResult.rows[0].stripe_customer_id;
+    const userEmail = userResult.rows[0].email;
+
+    // Create Stripe customer if doesn't exist
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: userEmail,
+      });
+      stripeCustomerId = customer.id;
+
+      // Save customer ID to database
+      await pool.query(
+        'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
+        [stripeCustomerId, decoded.userId]
+      );
+    }
+
+    // Attach payment method to customer
+    await stripe.paymentMethods.attach(payment_method_id, {
+      customer: stripeCustomerId,
+    });
+
+    // Set as default if it's the first payment method
+    const existingMethods = await stripe.paymentMethods.list({
+      customer: stripeCustomerId,
+      type: 'card',
+    });
+
+    if (existingMethods.data.length === 1) {
+      await stripe.customers.update(stripeCustomerId, {
+        invoice_settings: {
+          default_payment_method: payment_method_id,
+        },
+      });
+    }
+
+    res.json({ message: 'Payment method added successfully' });
+  } catch (error) {
+    console.error('Add payment method error:', error);
+    res.status(500).json({ error: 'Failed to add payment method' });
+  }
+});
+
+// Delete payment method
+app.delete('/api/payment-methods/:id', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { id } = req.params;
+
+    // Verify the payment method belongs to this user's customer
+    const userResult = await pool.query(
+      'SELECT stripe_customer_id FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+
+    if (userResult.rows.length === 0 || !userResult.rows[0].stripe_customer_id) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    // Detach payment method
+    await stripe.paymentMethods.detach(id);
+
+    res.json({ message: 'Payment method removed successfully' });
+  } catch (error) {
+    console.error('Delete payment method error:', error);
+    res.status(500).json({ error: 'Failed to remove payment method' });
+  }
+});
+
+// Set default payment method
+app.post('/api/payment-methods/:id/set-default', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { id } = req.params;
+
+    // Get user's Stripe customer ID
+    const userResult = await pool.query(
+      'SELECT stripe_customer_id FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+
+    if (userResult.rows.length === 0 || !userResult.rows[0].stripe_customer_id) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    const stripeCustomerId = userResult.rows[0].stripe_customer_id;
+
+    // Set as default payment method
+    await stripe.customers.update(stripeCustomerId, {
+      invoice_settings: {
+        default_payment_method: id,
+      },
+    });
+
+    res.json({ message: 'Default payment method updated' });
+  } catch (error) {
+    console.error('Set default payment method error:', error);
+    res.status(500).json({ error: 'Failed to set default payment method' });
+  }
+});
+
+// ============================================
 // BOOKINGS ROUTES
 // ============================================
 

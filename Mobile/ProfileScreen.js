@@ -105,11 +105,12 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const menuItems = [
+  
     { 
-      icon: '📝', 
-      label: 'Edit Profile',
-      onPress: () => navigation.navigate('EditProfile')
-    },
+  icon: '💳', 
+  label: 'Payment Methods',
+  onPress: () => navigation.navigate('PaymentMethods')
+},
     { 
       icon: '🅿️', 
       label: 'My Listed Spaces',

@@ -12,6 +12,7 @@ import ProfileScreen from './ProfileScreen';
 import MyListedSpacesScreen from './MyListedSpacesScreen';
 import EditProfileScreen from './EditProfileScreen';
 import EditSpaceScreen from './EditSpaceScreen';
+import PaymentMethodsScreen from './PaymentMethodsScreen';
 import HelpSupportScreen from './HelpSupportScreen';
 import PaymentScreen from './Screens/PaymentScreen';
 
@@ -107,6 +108,11 @@ export default function App() {
           <Stack.Screen 
             name="EditSpace" 
             component={EditSpaceScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="PaymentMethods" 
+            component={PaymentMethodsScreen}
             options={{ headerShown: false }}
           />
           <Stack.Screen 
