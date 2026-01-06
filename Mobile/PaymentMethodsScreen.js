@@ -8,6 +8,10 @@ import {
   ActivityIndicator,
   ScrollView,
   Modal,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { CardField, useStripe } from '@stripe/stripe-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -248,48 +252,63 @@ export default function PaymentMethodsScreen({ navigation }) {
         animationType="slide"
         onRequestClose={() => setAddCardModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Card</Text>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.modalOverlay}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Add New Card</Text>
 
-            <CardField
-              postalCodeEnabled={true}
-              placeholders={{
-                number: '4242 4242 4242 4242',
-              }}
-              cardStyle={styles.cardFieldStyle}
-              style={styles.cardField}
-              onCardChange={(cardDetails) => {
-                setCardComplete(cardDetails.complete);
-              }}
-            />
+                <CardField
+                  postalCodeEnabled={true}
+                  placeholders={{
+                    number: '4242 4242 4242 4242',
+                  }}
+                  cardStyle={styles.cardFieldStyle}
+                  style={styles.cardField}
+                  onCardChange={(cardDetails) => {
+                    setCardComplete(cardDetails.complete);
+                  }}
+                />
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setAddCardModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.dismissKeyboard}
+                  onPress={Keyboard.dismiss}
+                >
+                  <Text style={styles.dismissKeyboardText}>
+                    Tap here to dismiss keyboard
+                  </Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  styles.saveButton,
-                  (!cardComplete || addingCard) && styles.saveButtonDisabled,
-                ]}
-                onPress={handleAddCard}
-                disabled={!cardComplete || addingCard}
-              >
-                {addingCard ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.saveButtonText}>Add Card</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.cancelButton]}
+                    onPress={() => setAddCardModalVisible(false)}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.modalButton,
+                      styles.saveButton,
+                      (!cardComplete || addingCard) && styles.saveButtonDisabled,
+                    ]}
+                    onPress={handleAddCard}
+                    disabled={!cardComplete || addingCard}
+                  >
+                    {addingCard ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.saveButtonText}>Add Card</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </View>
   );
@@ -454,10 +473,20 @@ const styles = StyleSheet.create({
   },
   cardField: {
     height: 50,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   cardFieldStyle: {
     backgroundColor: '#f8f8f8',
+  },
+  dismissKeyboard: {
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  dismissKeyboardText: {
+    color: '#0ba360',
+    fontSize: 14,
+    fontWeight: '600',
   },
   modalButtons: {
     flexDirection: 'row',

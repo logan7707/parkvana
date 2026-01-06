@@ -51,11 +51,26 @@ export default function PaymentScreen({ route, navigation }) {
 
       console.log('Payment intent response status:', response.status);
 
+      // Check what we actually got back
+      const responseText = await response.text();
+      console.log('Raw response:', responseText.substring(0, 200)); // First 200 chars
+
       if (!response.ok) {
-        throw new Error('Failed to create payment intent');
+        console.error('Response not OK. Status:', response.status);
+        console.error('Response body:', responseText);
+        throw new Error(`Server error: ${response.status}`);
       }
 
-      const { clientSecret, bookingId } = await response.json();
+      // Try to parse JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON parse error. Response was:', responseText);
+        throw new Error('Server returned invalid response');
+      }
+
+      const { clientSecret, bookingId } = data;
       console.log('Booking ID received:', bookingId);
       console.log('Client secret received:', clientSecret ? 'Yes' : 'No');
 
@@ -93,15 +108,23 @@ export default function PaymentScreen({ route, navigation }) {
       });
 
       console.log('Confirm response status:', confirmResponse.status);
-      console.log('Confirm response OK:', confirmResponse.ok);
+
+      const confirmText = await confirmResponse.text();
+      console.log('Confirm raw response:', confirmText.substring(0, 200));
 
       if (!confirmResponse.ok) {
-        const errorData = await confirmResponse.json();
-        console.log('Confirm error data:', errorData);
-        throw new Error('Failed to confirm booking');
+        console.error('Confirm response not OK:', confirmText);
+        throw new Error(`Failed to confirm booking: ${confirmResponse.status}`);
       }
 
-      const confirmData = await confirmResponse.json();
+      let confirmData;
+      try {
+        confirmData = JSON.parse(confirmText);
+      } catch (parseError) {
+        console.error('Confirm JSON parse error. Response was:', confirmText);
+        throw new Error('Server returned invalid confirmation response');
+      }
+
       console.log('Confirm success data:', confirmData);
       console.log('=== Booking complete! ===');
 

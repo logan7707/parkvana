@@ -12,6 +12,9 @@ export default function AddSpaceScreen({ navigation }) {
   const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
   const [hourlyRate, setHourlyRate] = useState('');
+  const [dailyRate, setDailyRate] = useState('');
+  const [weeklyRate, setWeeklyRate] = useState('');
+  const [monthlyRate, setMonthlyRate] = useState('');
   const [spaceType, setSpaceType] = useState('parking_lot');
   const [loading, setLoading] = useState(false);
 
@@ -26,12 +29,26 @@ export default function AddSpaceScreen({ navigation }) {
   const handleSubmit = async () => {
     // Validation
     if (!title || !description || !address || !city || !state || !zipCode || !hourlyRate) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
     if (isNaN(parseFloat(hourlyRate)) || parseFloat(hourlyRate) <= 0) {
       Alert.alert('Error', 'Please enter a valid hourly rate');
+      return;
+    }
+
+    // Validate optional rates if provided
+    if (dailyRate && (isNaN(parseFloat(dailyRate)) || parseFloat(dailyRate) <= 0)) {
+      Alert.alert('Error', 'Please enter a valid daily rate or leave it empty');
+      return;
+    }
+    if (weeklyRate && (isNaN(parseFloat(weeklyRate)) || parseFloat(weeklyRate) <= 0)) {
+      Alert.alert('Error', 'Please enter a valid weekly rate or leave it empty');
+      return;
+    }
+    if (monthlyRate && (isNaN(parseFloat(monthlyRate)) || parseFloat(monthlyRate) <= 0)) {
+      Alert.alert('Error', 'Please enter a valid monthly rate or leave it empty');
       return;
     }
 
@@ -73,6 +90,9 @@ export default function AddSpaceScreen({ navigation }) {
         state,
         zip_code: zipCode,
         hourly_rate: parseFloat(hourlyRate),
+        daily_rate: dailyRate ? parseFloat(dailyRate) : null,
+        weekly_rate: weeklyRate ? parseFloat(weeklyRate) : null,
+        monthly_rate: monthlyRate ? parseFloat(monthlyRate) : null,
         space_type: spaceType,
         latitude,
         longitude,
@@ -99,6 +119,9 @@ export default function AddSpaceScreen({ navigation }) {
               setState('');
               setZipCode('');
               setHourlyRate('');
+              setDailyRate('');
+              setWeeklyRate('');
+              setMonthlyRate('');
               navigation.goBack();
             }
           }
@@ -185,12 +208,45 @@ export default function AddSpaceScreen({ navigation }) {
           </View>
         </View>
 
+        <Text style={styles.sectionHeader}>Pricing Options</Text>
+        <Text style={styles.helperText}>Set your rates (hourly is required, others are optional)</Text>
+
         <Text style={styles.label}>Hourly Rate ($) *</Text>
         <TextInput
           style={styles.input}
           placeholder="10.00"
           value={hourlyRate}
           onChangeText={setHourlyRate}
+          keyboardType="decimal-pad"
+          editable={!loading}
+        />
+
+        <Text style={styles.label}>Daily Rate ($) - Optional</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="50.00 (recommended: 20-24x hourly)"
+          value={dailyRate}
+          onChangeText={setDailyRate}
+          keyboardType="decimal-pad"
+          editable={!loading}
+        />
+
+        <Text style={styles.label}>Weekly Rate ($) - Optional</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="300.00 (recommended: 6-7x daily)"
+          value={weeklyRate}
+          onChangeText={setWeeklyRate}
+          keyboardType="decimal-pad"
+          editable={!loading}
+        />
+
+        <Text style={styles.label}>Monthly Rate ($) - Optional</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="1000.00 (recommended: 4x weekly)"
+          value={monthlyRate}
+          onChangeText={setMonthlyRate}
           keyboardType="decimal-pad"
           editable={!loading}
         />
@@ -253,6 +309,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginBottom: 20,
+  },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 20,
+    marginBottom: 5,
+    color: '#0ba360',
+  },
+  helperText: {
+    fontSize: 14,
+    color: '#999',
+    marginBottom: 15,
+    fontStyle: 'italic',
   },
   label: {
     fontSize: 16,

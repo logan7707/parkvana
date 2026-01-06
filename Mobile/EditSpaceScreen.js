@@ -20,6 +20,9 @@ export default function EditSpaceScreen({ route, navigation }) {
     title: space.title || '',
     address: space.address || '',
     hourly_rate: space.hourly_rate?.toString() || '',
+    daily_rate: space.daily_rate?.toString() || '',
+    weekly_rate: space.weekly_rate?.toString() || '',
+    monthly_rate: space.monthly_rate?.toString() || '',
     space_type: space.space_type || 'driveway',
     description: space.description || '',
     features: space.features || '',
@@ -52,6 +55,20 @@ export default function EditSpaceScreen({ route, navigation }) {
       return;
     }
 
+    // Validate optional rates if provided
+    if (formData.daily_rate && (isNaN(parseFloat(formData.daily_rate)) || parseFloat(formData.daily_rate) <= 0)) {
+      Alert.alert('Error', 'Please enter a valid daily rate or leave it empty');
+      return;
+    }
+    if (formData.weekly_rate && (isNaN(parseFloat(formData.weekly_rate)) || parseFloat(formData.weekly_rate) <= 0)) {
+      Alert.alert('Error', 'Please enter a valid weekly rate or leave it empty');
+      return;
+    }
+    if (formData.monthly_rate && (isNaN(parseFloat(formData.monthly_rate)) || parseFloat(formData.monthly_rate) <= 0)) {
+      Alert.alert('Error', 'Please enter a valid monthly rate or leave it empty');
+      return;
+    }
+
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('userToken');
@@ -68,6 +85,9 @@ export default function EditSpaceScreen({ route, navigation }) {
             title: formData.title.trim(),
             address: formData.address.trim(),
             hourly_rate: parseFloat(formData.hourly_rate),
+            daily_rate: formData.daily_rate ? parseFloat(formData.daily_rate) : null,
+            weekly_rate: formData.weekly_rate ? parseFloat(formData.weekly_rate) : null,
+            monthly_rate: formData.monthly_rate ? parseFloat(formData.monthly_rate) : null,
             space_type: formData.space_type,
             description: formData.description.trim(),
             features: formData.features.trim() || null,
@@ -142,6 +162,10 @@ export default function EditSpaceScreen({ route, navigation }) {
             </Text>
           </View>
 
+          {/* Pricing Section */}
+          <Text style={styles.sectionHeader}>Pricing Options</Text>
+          <Text style={styles.helperText}>Set your rates (hourly is required, others are optional)</Text>
+
           {/* Hourly Rate */}
           <View style={styles.fieldContainer}>
             <Text style={styles.label}>Hourly Rate ($) *</Text>
@@ -151,6 +175,51 @@ export default function EditSpaceScreen({ route, navigation }) {
               value={formData.hourly_rate}
               onChangeText={(text) =>
                 setFormData({ ...formData, hourly_rate: text })
+              }
+              keyboardType="decimal-pad"
+              maxLength={6}
+            />
+          </View>
+
+          {/* Daily Rate */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Daily Rate ($) - Optional</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="50.00 (recommended: 20-24x hourly)"
+              value={formData.daily_rate}
+              onChangeText={(text) =>
+                setFormData({ ...formData, daily_rate: text })
+              }
+              keyboardType="decimal-pad"
+              maxLength={6}
+            />
+          </View>
+
+          {/* Weekly Rate */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Weekly Rate ($) - Optional</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="300.00 (recommended: 6-7x daily)"
+              value={formData.weekly_rate}
+              onChangeText={(text) =>
+                setFormData({ ...formData, weekly_rate: text })
+              }
+              keyboardType="decimal-pad"
+              maxLength={6}
+            />
+          </View>
+
+          {/* Monthly Rate */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Monthly Rate ($) - Optional</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="1000.00 (recommended: 4x weekly)"
+              value={formData.monthly_rate}
+              onChangeText={(text) =>
+                setFormData({ ...formData, monthly_rate: text })
               }
               keyboardType="decimal-pad"
               maxLength={6}
@@ -266,6 +335,13 @@ const styles = StyleSheet.create({
   form: {
     padding: 20,
   },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 20,
+    marginBottom: 5,
+    color: '#0ba360',
+  },
   fieldContainer: {
     marginBottom: 25,
   },
@@ -294,6 +370,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#999',
     marginTop: 5,
+    marginBottom: 15,
+    fontStyle: 'italic',
   },
   radioGroup: {
     gap: 10,
