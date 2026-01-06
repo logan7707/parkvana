@@ -587,7 +587,6 @@ app.get('/api/bookings/owner/:userId', async (req, res) => {
         b.end_datetime as end_date,
         b.total_price,
         b.status,
-        b.rate_type,
         b.created_at,
         ps.title as space_title,
         ps.address as space_address,
