@@ -142,6 +142,9 @@ app.post('/api/spots', async (req, res) => {
       latitude,
       longitude,
       hourly_rate,
+      daily_rate,
+      weekly_rate,
+      monthly_rate,
       space_type,
       description,
       features
@@ -173,11 +176,11 @@ app.post('/api/spots', async (req, res) => {
     const result = await pool.query(
       `INSERT INTO parking_spaces 
        (owner_id, title, address, city, state, zip_code, latitude, longitude, 
-        hourly_rate, space_type, description, features, available)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
+        hourly_rate, daily_rate, weekly_rate, monthly_rate, space_type, description, features, available)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, true)
        RETURNING *`,
       [decoded.userId, title, address, city, state, zip_code, latitude, longitude, 
-       hourly_rate, space_type, description, features]
+       hourly_rate, daily_rate, weekly_rate, monthly_rate, space_type, description, features]
     );
     
     res.json(result.rows[0]);
@@ -216,6 +219,9 @@ app.put('/api/spots/:id', async (req, res) => {
       title,
       address,
       hourly_rate,
+      daily_rate,
+      weekly_rate,
+      monthly_rate,
       space_type,
       description,
       features
@@ -238,11 +244,13 @@ app.put('/api/spots/:id', async (req, res) => {
     const result = await pool.query(
       `UPDATE parking_spaces 
        SET title = $1, address = $2, hourly_rate = $3, 
-           space_type = $4, description = $5, features = $6,
+           daily_rate = $4, weekly_rate = $5, monthly_rate = $6,
+           space_type = $7, description = $8, features = $9,
            updated_at = NOW()
-       WHERE id = $7
+       WHERE id = $10
        RETURNING *`,
-      [title, address, hourly_rate, space_type, description, features || null, id]
+      [title, address, hourly_rate, daily_rate, weekly_rate, monthly_rate, 
+       space_type, description, features || null, id]
     );
     
     res.json(result.rows[0]);
