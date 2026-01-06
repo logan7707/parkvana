@@ -551,7 +551,7 @@ app.post('/api/payment-methods/:id/set-default', async (req, res) => {
 // BOOKINGS ROUTES
 // ============================================
 
-// Get my bookings
+// Get my bookings (as renter)
 app.get('/api/bookings', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -570,6 +570,41 @@ app.get('/api/bookings', async (req, res) => {
   } catch (error) {
     console.error('Get bookings error:', error);
     res.status(500).json({ error: 'Failed to get bookings' });
+  }
+});
+
+// Get bookings for spaces owned by user (Owner Dashboard)
+app.get('/api/bookings/owner/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const result = await pool.query(
+      `SELECT 
+        b.id,
+        b.space_id,
+        b.renter_id as user_id,
+        b.start_datetime as start_date,
+        b.end_datetime as end_date,
+        b.total_price,
+        b.status,
+        b.rate_type,
+        b.created_at,
+        ps.title as space_title,
+        ps.address as space_address,
+        CONCAT(u.first_name, ' ', u.last_name) as renter_name,
+        u.email as renter_email
+      FROM bookings b
+      JOIN parking_spaces ps ON b.space_id = ps.id
+      JOIN users u ON b.renter_id = u.id
+      WHERE ps.owner_id = $1
+      ORDER BY b.created_at DESC`,
+      [userId]
+    );
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching owner bookings:', error);
+    res.status(500).json({ error: 'Failed to fetch bookings' });
   }
 });
 
