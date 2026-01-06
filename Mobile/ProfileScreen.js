@@ -116,6 +116,11 @@ export default function ProfileScreen({ navigation }) {
       onPress: () => navigation.navigate('OwnerDashboard')
     },
     { 
+      icon: '🆔', 
+      label: 'ID Verification',
+      onPress: () => navigation.navigate('IDVerification')
+    },
+    { 
       icon: '💳', 
       label: 'Payment Methods',
       onPress: () => navigation.navigate('PaymentMethods')
