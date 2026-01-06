@@ -14,7 +14,8 @@ import EditProfileScreen from './EditProfileScreen';
 import EditSpaceScreen from './EditSpaceScreen';
 import PaymentMethodsScreen from './PaymentMethodsScreen';
 import HelpSupportScreen from './HelpSupportScreen';
-import PaymentScreen from './Screens/PaymentScreen';
+import PaymentScreen from './PaymentScreen';
+import OwnerDashboard from './OwnerDashboard';
 
 const Stack = createNativeStackNavigator();
 
@@ -98,6 +99,11 @@ export default function App() {
           <Stack.Screen 
             name="MyListedSpaces" 
             component={MyListedSpacesScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="OwnerDashboard" 
+            component={OwnerDashboard}
             options={{ headerShown: false }}
           />
           <Stack.Screen 

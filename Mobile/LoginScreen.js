@@ -18,11 +18,13 @@ export default function LoginScreen({ navigation }) {
     try {
       const data = await api.login(email, password);
       
-      // Store token in AsyncStorage
+      // Store token and user data in AsyncStorage
       await AsyncStorage.setItem('userToken', data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+      await AsyncStorage.setItem('userId', data.user.id.toString()); // ADD THIS LINE
       
       console.log('Login successful, token stored');
+      console.log('User ID saved:', data.user.id);
       
       navigation.reset({
         index: 0,

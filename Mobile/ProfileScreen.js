@@ -105,21 +105,20 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const menuItems = [
-  
-    { 
-  icon: '💳', 
-  label: 'Payment Methods',
-  onPress: () => navigation.navigate('PaymentMethods')
-},
     { 
       icon: '🅿️', 
       label: 'My Listed Spaces',
       onPress: () => navigation.navigate('MyListedSpaces')
     },
     { 
+      icon: '📊', 
+      label: 'Owner Dashboard',
+      onPress: () => navigation.navigate('OwnerDashboard')
+    },
+    { 
       icon: '💳', 
       label: 'Payment Methods',
-      onPress: () => Alert.alert('Coming Soon', 'Payment methods will be available in the next update')
+      onPress: () => navigation.navigate('PaymentMethods')
     },
     { 
       icon: '⚙️', 
