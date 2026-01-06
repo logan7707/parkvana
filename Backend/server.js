@@ -772,6 +772,143 @@ app.post('/api/bookings/:id/extend', async (req, res) => {
 });
 
 // ============================================
+// ID VERIFICATION ROUTES (Stripe Identity)
+// ============================================
+
+// Create verification session
+app.post('/api/verification/create-session', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Get user info
+    const userResult = await pool.query(
+      'SELECT email, first_name, last_name, verification_status FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Check if already verified
+    if (user.verification_status === 'verified') {
+      return res.status(400).json({ error: 'Already verified' });
+    }
+
+    // Create Stripe Identity VerificationSession
+    const verificationSession = await stripe.identity.verificationSessions.create({
+      type: 'document',
+      metadata: {
+        user_id: decoded.userId,
+        email: user.email,
+      },
+      options: {
+        document: {
+          require_live_capture: true,
+          require_matching_selfie: true,
+        },
+      },
+    });
+
+    // Save session ID to database
+    await pool.query(
+      `UPDATE users 
+       SET stripe_verification_session_id = $1, 
+           verification_status = 'pending'
+       WHERE id = $2`,
+      [verificationSession.id, decoded.userId]
+    );
+
+    res.json({
+      clientSecret: verificationSession.client_secret,
+      sessionId: verificationSession.id,
+    });
+
+  } catch (error) {
+    console.error('Create verification session error:', error);
+    res.status(500).json({ error: 'Failed to create verification session' });
+  }
+});
+
+// Get verification status
+app.get('/api/verification/status', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const result = await pool.query(
+      'SELECT verification_status, id_verified, verified_at FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (error) {
+    console.error('Get verification status error:', error);
+    res.status(500).json({ error: 'Failed to get verification status' });
+  }
+});
+
+// Stripe webhook endpoint for verification events
+app.post('/api/verification/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle verification events
+  if (event.type === 'identity.verification_session.verified') {
+    const session = event.data.object;
+    const userId = session.metadata.user_id;
+
+    // Update user as verified
+    await pool.query(
+      `UPDATE users 
+       SET id_verified = TRUE, 
+           verification_status = 'verified',
+           verified_at = NOW()
+       WHERE id = $1`,
+      [userId]
+    );
+
+    console.log(`✅ User ${userId} verified successfully`);
+  }
+
+  if (event.type === 'identity.verification_session.requires_input') {
+    const session = event.data.object;
+    const userId = session.metadata.user_id;
+
+    // Update status to requires_input
+    await pool.query(
+      `UPDATE users 
+       SET verification_status = 'requires_input'
+       WHERE id = $1`,
+      [userId]
+    );
+
+    console.log(`⚠️ User ${userId} verification requires input`);
+  }
+
+  res.json({ received: true });
+});
+
+// ============================================
 // WAITLIST ROUTE
 // ============================================
 
