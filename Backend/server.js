@@ -295,8 +295,8 @@ app.post('/api/bookings/create-payment-intent', async (req, res) => {
     // Customer pays: Just the parking fee
     const totalPrice = amount / 100; // Convert cents to dollars (e.g., $6.00)
     
-    // Platform commission: 15% of parking fee
-    const platformCommission = totalPrice * 0.15; // e.g., $0.90
+    // Platform commission: 25% of parking fee
+    const platformCommission = totalPrice * 0.25; // e.g., $1.50
     
     // Veteran donation: $1.00 total, split 50/50
     const veteranDonation = 1.00;
@@ -304,10 +304,10 @@ app.post('/api/bookings/create-payment-intent', async (req, res) => {
     const ownerContribution = 0.50;    // Owner contributes $0.50
     
     // Platform keeps: commission - platform's donation contribution
-    const platformFee = platformCommission - parkvanaContribution; // e.g., $0.90 - $0.50 = $0.40
+    const platformFee = platformCommission - parkvanaContribution; // e.g., $1.50 - $0.50 = $1.00
     
     // Owner receives: total - commission - owner's donation contribution
-    const ownerPayout = totalPrice - platformCommission - ownerContribution; // e.g., $6 - $0.90 - $0.50 = $4.60
+    const ownerPayout = totalPrice - platformCommission - ownerContribution; // e.g., $6 - $1.50 - $0.50 = $4.00
     
     // Create booking in pending state
     const bookingResult = await pool.query(
@@ -719,7 +719,7 @@ app.post('/api/bookings/:id/extend', async (req, res) => {
 
     // Calculate additional cost (NO veteran donation for extensions)
     const additionalCost = booking.hourly_rate * additional_hours;
-    const additionalCommission = additionalCost * 0.15;
+    const additionalCommission = additionalCost * 0.25;
     const additionalPlatformFee = additionalCommission; // No donation on extensions
     const additionalOwnerPayout = additionalCost - additionalCommission;
 
