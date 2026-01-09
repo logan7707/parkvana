@@ -776,14 +776,14 @@ app.post('/api/bookings/:id/extend', async (req, res) => {
 // ============================================
 
 // Create verification session
-app.post('/api/verification/create-session', async (req, res) => {
+app.post('/api/id-verification/create-session', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Get user info
     const userResult = await pool.query(
-      'SELECT email, first_name, last_name, verification_status FROM users WHERE id = $1',
+      'SELECT email, first_name, last_name, verification_status, id_verified FROM users WHERE id = $1',
       [decoded.userId]
     );
 
@@ -794,7 +794,7 @@ app.post('/api/verification/create-session', async (req, res) => {
     const user = userResult.rows[0];
 
     // Check if already verified
-    if (user.verification_status === 'verified') {
+    if (user.id_verified || user.verification_status === 'verified') {
       return res.status(400).json({ error: 'Already verified' });
     }
 
@@ -825,6 +825,7 @@ app.post('/api/verification/create-session', async (req, res) => {
     res.json({
       clientSecret: verificationSession.client_secret,
       sessionId: verificationSession.id,
+      url: verificationSession.url,
     });
 
   } catch (error) {
@@ -834,7 +835,7 @@ app.post('/api/verification/create-session', async (req, res) => {
 });
 
 // Get verification status
-app.get('/api/verification/status', async (req, res) => {
+app.get('/api/id-verification/status', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -848,7 +849,13 @@ app.get('/api/verification/status', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(result.rows[0]);
+    const user = result.rows[0];
+
+    res.json({
+      verified: user.id_verified || false,
+      verification_status: user.verification_status || 'unverified',
+      verified_at: user.verified_at
+    });
 
   } catch (error) {
     console.error('Get verification status error:', error);
@@ -857,7 +864,7 @@ app.get('/api/verification/status', async (req, res) => {
 });
 
 // Stripe webhook endpoint for verification events
-app.post('/api/verification/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/api/id-verification/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
 
