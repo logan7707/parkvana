@@ -30,9 +30,13 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, password, first_name, last_name, phone } = req.body;
     
+    // NORMALIZE EMAIL: Make case-insensitive and trim whitespace
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    // Check for existing user with case-insensitive email
     const existingUser = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
+      'SELECT * FROM users WHERE LOWER(email) = LOWER($1)',
+      [normalizedEmail]
     );
     
     if (existingUser.rows.length > 0) {
@@ -41,10 +45,11 @@ app.post('/api/auth/register', async (req, res) => {
     
     const hashedPassword = await bcrypt.hash(password, 10);
     
+    // Store email in normalized (lowercase) form
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, first_name, last_name, phone) 
        VALUES ($1, $2, $3, $4, $5) RETURNING id, email, first_name, last_name`,
-      [email, hashedPassword, first_name, last_name, phone]
+      [normalizedEmail, hashedPassword, first_name, last_name, phone]
     );
     
     const token = jwt.sign(
@@ -68,9 +73,13 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
+    // NORMALIZE EMAIL: Make case-insensitive and trim whitespace
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    // Query with case-insensitive email matching
     const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
+      'SELECT * FROM users WHERE LOWER(email) = LOWER($1)',
+      [normalizedEmail]
     );
     
     if (result.rows.length === 0) {
@@ -78,6 +87,8 @@ app.post('/api/auth/login', async (req, res) => {
     }
     
     const user = result.rows[0];
+    
+    // Password comparison remains case-sensitive for security
     const validPassword = await bcrypt.compare(password, user.password_hash);
     
     if (!validPassword) {
